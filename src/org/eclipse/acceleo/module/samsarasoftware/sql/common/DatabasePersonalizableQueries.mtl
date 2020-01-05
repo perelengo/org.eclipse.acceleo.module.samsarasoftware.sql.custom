@@ -1,0 +1,85 @@
+[comment encoding = UTF-8 /]
+[module DatabasePersonalizableQueries('http://www.eclipse.org/uml2/5.0.0/UML')/]
+
+
+[query public getStereotypeHierarchy(stereotype : Stereotype) : Sequence(Stereotype) = 
+if(stereotype.general->size()>0) then
+stereotype.general->select(u | u.oclIsTypeOf(Stereotype))->collect(u | u.oclAsType(Stereotype).getStereotypeHierarchy())->asSequence()->append(stereotype)
+else
+Sequence{stereotype}
+endif
+ /]
+
+[query public getTaggedValue(stereotypedElement : Element, stereotypeQualifiedName : String, propertyName : String) : OclAny = 
+   let sts : Collection(OclAny) = stereotypedElement.getAppliedStereotypes()->collect( b | 
+				if(
+					b.getStereotypeHierarchy()->asSequence()->append(b)->exists(s |s.oclAsType(Stereotype).qualifiedName=stereotypeQualifiedName)
+				and
+					b.getStereotypeHierarchy()->asSequence()->append(b)  
+				->collect(s | s.oclAsType(Stereotype).feature)
+				->exists(f | f.oclAsType(Feature).name=propertyName)
+				) then
+					stereotypedElement.getValue(b,propertyName)
+				else
+					Sequence{}
+				endif
+			) in 
+	if(sts->size()>0) then sts->any(s | not(s.oclIsUndefined())) else null endif
+/]
+
+[query public truncate (name : String , len: Integer) : String = if( name.size()>len ) then name.substring(1,len) else name endif  /]
+
+[query public getMaximumIdentifierLength() : Integer = 30 /]
+
+[query public formatUpperFirst (name : String) : String = name.toUpper() /]
+
+[query public formatLowerFirst (name : String) : String = name.toUpper() /]
+
+[query public getTableName(eclass : Classifier) : String = 
+	let constraints:OclAny = eclass.getTaggedValue('database::Table', 'name') in
+	if(not(constraints.oclIsUndefined())) then
+		eclass.getTaggedValue('database::Table', 'name')
+	else
+		eclass.name.toUpper() 
+	endif
+/]
+
+[query public getAssociationEndName(column : NamedElement) : String = 
+	let constraints:OclAny = column.getTaggedValue('database::Column', 'name') in
+	if(not(constraints.oclIsUndefined())) then
+		column.getTaggedValue('database::Column', 'name')
+	else
+		column.name.toUpper() 
+	endif
+/]
+
+[query public getPkName(eclass:Classifier ) : String = eclass.name.toUpper()+'_PK' /]
+
+[query public getFkName(association:Association, eclass:Classifier ) : String =
+	let origin:Property= association.memberEnd->any(e | e.type=eclass) in
+	let target:Property=association.memberEnd->any(e | e<>origin) in 
+	let constraints:OclAny = association.getTaggedValue('database::ForeignKey', 'name') in
+	if(not(constraints.oclIsUndefined())) then
+		association.getTaggedValue('database::ForeignKey', 'name')
+	else
+		let tbS:Integer=(getMaximumIdentifierLength()/2).floor()-origin.type._package.packagePrefix().size()-2 in 
+		eclass._package.packagePrefix() + origin.name.formatLowerFirst().truncate(tbS)+'_'+target.name.formatLowerFirst().truncate(tbS)+'_FK'
+	endif
+ /]
+[query public getSuperFkName( origin : Classifier, target : Classifier ) : String = 
+let tbS:Integer=(getMaximumIdentifierLength()/2).floor()-origin._package.packagePrefix().size()-2 in 
+origin._package.packagePrefix() + origin.name.formatUpperFirst().truncate(tbS)+'_'+target.name.formatUpperFirst().truncate(tbS)+'_FK' /]
+
+[query public getSequenceName(eclass : Classifier) : String = eclass.getTableName().truncate(getMaximumIdentifierLength()-4)+'_SEQ' /]
+
+[query public getIndexName(eclass: Classifier, column : NamedElement) : String = (eclass._package.packagePrefix()+eclass.name.formatUpperFirst()).truncate(12)+'_'+(if(column.oclIsKindOf(Classifier))then eclass._package.packagePrefix()+column.name.formatUpperFirst() else column.name.formatLowerFirst() endif).truncate( 12) +'_I'/]
+
+[query public getSuperIndexName(eclass: Classifier,general : Classifier) : String = eclass._package.packagePrefix()+eclass.name.formatUpperFirst().truncate(10)+'_'+general.name.formatLowerFirst().truncate(10)+'_I'/]
+
+[query public packagePrefix (ePackage : Element) : String = 
+	if(ePackage.owner.oclIsTypeOf(Model)) then  
+		 ''
+	else
+		ePackage.owner.packagePrefix()
+	endif
+ /]
