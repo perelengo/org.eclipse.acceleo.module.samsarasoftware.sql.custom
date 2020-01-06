@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -13,7 +14,25 @@
 	<version>0.2.0-SNAPSHOT</version>
 	<packaging>eclipse-plugin</packaging>
 
-
+	<repositories>
+		<repository>
+			<id>eclipse-platform</id>
+			<layout>p2</layout>
+			<url>${eclipse-site}</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>Eclipse - maven</id>
+			<url>https://repo.eclipse.org/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -60,7 +79,7 @@
 						<configuration>
 							<resources>
 								<resource>
-									<directory>${env.SAMSARASOFTWARE_WORKSPACE_DIR}/net.samsarasoftware/src/license/</directory>
+									<directory>${basedir}/../net.samsarasoftware/src/license/</directory>
 									<include>THIRD-PARTY.properties</include>
 									<filtering>true</filtering>
 								</resource>
@@ -74,14 +93,14 @@
 				<groupId>org.eclipse.acceleo</groupId>
 				<artifactId>org.eclipse.acceleo.maven</artifactId>
 				<version>${acceleo.maven.version}</version>
-						<executions>
-							<execution>
-								<phase>compile</phase>
-								<goals>
-									<goal>acceleo-compile</goal>
-								</goals>
-							</execution>
-						</executions>
+				<executions>
+					<execution>
+						<phase>compile</phase>
+						<goals>
+							<goal>acceleo-compile</goal>
+						</goals>
+					</execution>
+				</executions>
 				<configuration>
 					<useBinaryResources>false</useBinaryResources>
 					<usePlatformResourcePath>true</usePlatformResourcePath>
@@ -105,4 +124,15 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<scm>
+		<developerConnection>scm:git:git://github.com/perelengo/org.eclipse.acceleo.module.samsarasoftware.sql.custom.git</developerConnection>
+	</scm>
+	<distributionManagement>
+		<repository>
+			<id>maven3.samsara-software.es</id>
+			<url>scpexe://maven3.samsara-software.es:22/home/samsara-software/domains/maven3.samsara-software.es/repository</url>
+		</repository>
+	</distributionManagement>
+
 </project>
