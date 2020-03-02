@@ -70,7 +70,21 @@ endif
 let tbS:Integer=(getMaximumIdentifierLength()/2).floor()-origin._package.packagePrefix().size()-2 in 
 origin._package.packagePrefix() + origin.name.formatUpperFirst().truncate(tbS)+'_'+target.name.formatUpperFirst().truncate(tbS)+'_FK' /]
 
-[query public getSequenceName(eclass : Classifier) : String = eclass.getTableName().truncate(getMaximumIdentifierLength()-4)+'_SEQ' /]
+[query public getSequenceName(eclass : Classifier) : String = 
+	let stereotypeSequence:OclAny = eclass.getTaggedValue('database::Table', 'sequence') in
+	if(not(stereotypeSequence.oclIsUndefined())) then
+		let refSeq:Class=stereotypeSequence.oclAsType(EObject).eCrossReferences()->any(t | not(t.oclIsInvalid())).oclAsType(Class) in
+			let constraints:OclAny = refSeq.getTaggedValue('database::Sequence', 'name') in
+			if(not(constraints.oclIsUndefined())) then
+				constraints.toString()
+			else
+				refSeq.name
+			endif
+	else
+		eclass.getTableName().truncate(getMaximumIdentifierLength()-4)+'_SEQ' 
+	endif
+
+ /]
 
 [query public getIndexName(eclass: Classifier, column : NamedElement) : String = (eclass._package.packagePrefix()+eclass.name.formatUpperFirst()).truncate(12)+'_'+(if(column.oclIsKindOf(Classifier))then eclass._package.packagePrefix()+column.name.formatUpperFirst() else column.name.formatLowerFirst() endif).truncate( 12) +'_I'/]
 
